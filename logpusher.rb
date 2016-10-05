@@ -80,16 +80,19 @@ if options[:auth_token]
   auth_data[:auth_token] = options[:auth_token]
 end
 
-uploader = EventQLUploader.new(
-    options[:table],
-    options[:host],
-    options[:port],
-    options[:database],
-    auth_data)
-pusher = LogfilePusher.new(options[:file], options[:regex], uploader)
+begin
+  uploader = EventQLUploader.new(
+      options[:table],
+      options[:host],
+      options[:port],
+      options[:database],
+      auth_data)
 
+  pusher = LogfilePusher.new(options[:file], options[:regex], uploader)
+  pusher.run
 
-pusher.run
-
-
+rescue
+  $stderr.puts "ERROR: #{$!} \n"
+  exit(1)
+end
 
