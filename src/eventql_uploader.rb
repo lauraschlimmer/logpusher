@@ -41,7 +41,6 @@ class EventQLUploader < LogfileUploader
       idx += 1
     end
     json += "]"
-    puts json
 
     begin
       res = nil
