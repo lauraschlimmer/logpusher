@@ -1,8 +1,8 @@
-#logpusher
+# logpusher
 
 Reads a logfile and uploads the loglines to a database
 
-###Arguments
+### Arguments
     -f, --file filename              Set the logfile to import
     -r, --regex regex                The Regex of the logline
     -t, --table table                Set the table name
@@ -16,7 +16,7 @@ Reads a logfile and uploads the loglines to a database
         --help                       help
 
 
-###Example
+### Example
 Logfile
 
     1475682457 fr11
