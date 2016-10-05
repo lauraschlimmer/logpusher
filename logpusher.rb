@@ -89,7 +89,7 @@ uploader = EventQLUploader.new(
 pusher = LogfilePusher.new(options[:file], options[:regex], uploader)
 
 
+pusher.run
 
-#read loglines
 
-#push logline batches
+
