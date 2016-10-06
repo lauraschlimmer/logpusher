@@ -1,22 +1,30 @@
 # logpusher
 
-A command line tool to import logfiles into a database.
+A command line tool to import logfiles into a database. New loglines in the file
+are constantly added.
 
 
     $ logpusher -f ngix.logs -r "(?<time>\d{10}) (?<server_name>\w+)" -t ngix.logs -h localhost -p 10001
 
-### Arguments
-    -f, --file filename              Set the logfile to import
-    -r, --regex regex                The Regex of the logline
-    -t, --table table                Set the table name
-    -h, --host hostname              Set the hostname
-    -p, --port port                  Set the port
-    -u, --user username              Set the username
-        --password password          Set the password
-    -d, --database db                Set the database
-        --auth_token auth_token      Set the auth token
-    -v, --[no-]verbose               Run verbosely
-        --help                       help
+
+The pattern of the logline is indicated by a regex with named capturing groups.
+Each group represents a column in the target table.
+
+
+### Usage
+    $ logpusher [OPTIONS]
+
+        -f, --file filename              Set the logfile to import
+        -r, --regex regex                The Regex of the logline
+        -t, --table table                Set the table name
+        -h, --host hostname              Set the hostname
+        -p, --port port                  Set the port
+        -u, --user username              Set the username
+            --password password          Set the password
+        -d, --database db                Set the database
+            --auth_token auth_token      Set the auth token
+        -v, --[no-]verbose               Run verbosely
+            --help                       help
 
 
 ### Example
