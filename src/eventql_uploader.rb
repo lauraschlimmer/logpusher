@@ -30,6 +30,7 @@ class EventQLUploader < LogfileUploader
   end
 
   def send(records)
+    # build json
     idx = 0
     json = "["
     records.each do |r|
@@ -46,6 +47,12 @@ class EventQLUploader < LogfileUploader
       res = nil
       Net::HTTP.start(@host, @port) do |http|
         req = Net::HTTP::Post.new(API_URL)
+
+        # set auth headers
+        @auth_data.each do |key, value|
+          req[key] = value
+        end
+
         req.body = json
 
         res = http.request(req)
