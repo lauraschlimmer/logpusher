@@ -1,4 +1,4 @@
-class EventQLUploader < LogfileUploader
+class EventQLUploader
 
   API_URL = "/api/v1/tables/insert"
 
@@ -65,8 +65,6 @@ class EventQLUploader < LogfileUploader
     rescue TimeoutError => e
       $stderr.puts("Timeout error...", e.inspect)
     end
-
-    $stderr.puts("Inserted records...")
   end
 
 end
