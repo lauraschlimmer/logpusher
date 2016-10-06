@@ -5,8 +5,9 @@ require 'uri'
 require 'net/http'
 
 require "./src/util.rb"
+require "./src/upload_stats.rb"
+require "./src/rolling_aggregate.rb"
 require "./src/logfile_pusher.rb"
-require "./src/logfile_uploader.rb"
 require "./src/eventql_uploader.rb"
 
 # parse arguments
