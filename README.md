@@ -1,8 +1,9 @@
 # logpusher
 
-logpusher is a command line tool to constantly import a logfile into a database.
+A command line tool to import logfiles into a database.
 
-  $ logpusher -f ngix.logs -r "(?<time>\d{10}) (?<server_name>\w+)" -t ngix.logs -h localhost -p 10001
+
+    $ logpusher -f ngix.logs -r "(?<time>\d{10}) (?<server_name>\w+)" -t ngix.logs -h localhost -p 10001
 
 ### Arguments
     -f, --file filename              Set the logfile to import
