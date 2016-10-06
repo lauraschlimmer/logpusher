@@ -6,6 +6,7 @@ class LogfilePusher
     @logfile = logfile
     @regex = Regexp.new(regex)
     @uploader = uploader
+    @stats = UploadStats.new
 
     if !File.file?(@logfile)
       raise "the file doesn't exist: #{@logfile}"
@@ -23,31 +24,32 @@ public
       # if the inode number of the file changes (e.g. the file has been
       # logrotated), start reading the file at the beginning
       if (inode = File.stat(@logfile).ino) != cur_inode
-        offset = upload_file(0)
         cur_size = File.size(@logfile)
         cur_inode = inode
+        offset = upload_file(0)
+
+      # if the file size is smaller, start reading at the beginning
+      elsif (size = File.size(@logfile)) < cur_size
+        cur_size = size
+        offset = upload_file(0)
+
+      # if the file is bigger, start reading at the offset
+      elsif size > cur_size
+        cur_size = size
+        offset = upload_file(offset)
 
       else
-        size = File.size(@logfile)
-
-        # if the file size is smaller, start reading at the beginning
-        if size < cur_size
-          cur_size = size
-          offset = upload_file(0)
-
-        # if the file is bigger, start reading at the offset
-        elsif size > cur_size
-          cur_size = size
-          offset = upload_file(offset)
-
-        else
-          $stderr.puts "[WAITING] Logfile did not change since last push."
-        end
+        print_stats("wait")
       end
 
       sleep(5)
     end
 
+  end
+
+  def stop
+    #FIXME close file?
+    print_stats("stop")
   end
 
 private
@@ -56,8 +58,6 @@ private
   #
   # return the last position of the file
   def upload_file(offset = 0)
-    $stderr.puts "Reading logfile..."
-
     buffer = []
     idx = 0
     File.open(@logfile) do |file|
@@ -105,7 +105,27 @@ private
 
     @uploader.send(lines)
 
+    @stats.add_upload(lines.size)
+    print_stats("upload")
+
     return line.split("")
+  end
+
+  def print_stats(state)
+    $stderr.flush
+    case state
+    when "upload"
+      $stderr.print "Uploading... rate: #{@stats.get_rolling_rows_per_second} lines per second\r"
+
+    when "wait"
+      $stderr.print "Waiting... the file hasn't changed since the last upload\r"
+
+    when "stop"
+      $stderr.print "Uploaded #{@logfile}..." +
+          "total: #{@stats.get_total_row_count} lines, " +
+          "runtime: #{@stats.get_total_runtime.round(2)}s\n"
+
+    end
   end
 
 end

@@ -52,7 +52,7 @@ public
     idx = (@buckets_idx + (BUCKETS_CAPACITY - @buckets_size) + 1) %
         BUCKETS_CAPACITY
 
-    aggregate.interval_us = @buckets_size == 0 || time_now < @buckets[idx].time ?
+    aggregate.interval_us = @buckets_size == 0 ?
         0 :
         time_now.round(4) - @buckets[idx].time.round(4)
 

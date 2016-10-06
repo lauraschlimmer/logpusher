@@ -5,6 +5,7 @@ class UploadStats
   def initialize()
     @rolling_rows_per_second = RollingAggregate.new
     @total_row_count = 0
+    @start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
   end
 
   def add_upload(num_rows, size_rows = 0)
@@ -24,4 +25,7 @@ class UploadStats
     return @total_row_count
   end
 
+  def get_total_runtime
+    return Process.clock_gettime(Process::CLOCK_MONOTONIC) - @start
+  end
 end
