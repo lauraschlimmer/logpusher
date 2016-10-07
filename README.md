@@ -4,12 +4,14 @@ A command line tool to import logfiles into a database. New loglines in the file
 are constantly added.
 
 
-    $ logpusher -f ngix.logs -r "(?<time>\d{10}) (?<server_name>\w+)" -t ngix.logs -h localhost -p 10001
+    $ logpusher -f logs/access.logs -r "(?<time>\d{10}) (?<server_name>\w+)" -t access.logs -h localhost -p 10001
 
 
 The pattern of the logline is indicated by a regex with named capturing groups.
 Each group represents a column in the target table.
 
+###Database support
+EventQL
 
 ### Usage
     $ logpusher [OPTIONS]
@@ -28,15 +30,23 @@ Each group represents a column in the target table.
 
 
 ### Example
+In our example we want to upload a simple logfile that records time, server name,
+HTTP method and path for each access to our EventQL database.
+
 Logfile
 
-    1475682457 fr11
-    1475682458 fr12
-    1475682459 fr13
-    1475682460 fr14
-    1475682461 fr15
-    1475682462 fr16
+    1475682457 fr01 GET /
+    1475682458 fr05 POST /account/new
+    1475682461 fr01 GET /
+    1475682459 fr03 GET /products
+    1475682460 fr02 GET /about
+    1475682460 fr02 GET /images/about.png
 
-Upload the logfile to EventQL
+The regex for our logfile is
 
-    ruby logpusher.rb --file /tmp/logfile --regex "(?<time>\d{10}) (?<server_name>\w+)" --table log_test  -h localhost -p 10001 --database test
+    (?<time>\d+) (?<server_name>\w+) (?<http_method>\w+) (?<path>\w+)
+
+Now we can upload the logfile to our table access_logs
+
+    regex="(?<time>\d+) (?<server_name>\w+) (?<http_method>\w+) (?<path>.+)"
+    logpusher -f logs.access_logs -r $regex -t access_logs -h localhost -p 10001 -d dev
