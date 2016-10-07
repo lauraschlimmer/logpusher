@@ -4,9 +4,9 @@ require 'optparse'
 require 'uri'
 require 'net/http'
 
-require "./src/util.rb"
+require "./src/util/util.rb"
+require "./src/util/rolling_aggregate.rb"
 require "./src/upload_stats.rb"
-require "./src/rolling_aggregate.rb"
 require "./src/logfile_pusher.rb"
 require "./src/eventql_uploader.rb"
 
@@ -27,7 +27,7 @@ OptionParser.new do |opts|
     options[:table] = t
   end
 
-  opts.on("-host", "--host hostname", "Set the hostname") do |h|
+  opts.on("-h", "--host hostname", "Set the hostname") do |h|
     options[:host] = h
   end
 
@@ -39,7 +39,7 @@ OptionParser.new do |opts|
     options[:user] = u
   end
 
-  opts.on("", "--password password", "Set the password") do |u|
+  opts.on(nil, "--password password", "Set the password") do |u|
     options[:user] = u
   end
 
@@ -47,16 +47,16 @@ OptionParser.new do |opts|
     options[:database] = d
   end
 
-  opts.on("", "--auth_token auth_token", "Set the auth token") do |a|
+  opts.on(nil, "--auth_token token", "Set the auth token") do |a|
     options[:auth_token] = a
   end
 
-  opts.on("-v", "--[no-]verbose", "Run verbosely") do |v|
-    options[:verbose] = v
+  opts.on("-q", "--quiet", "Run quietly") do |q|
+    options[:quiet] = q
   end
 
-  opts.on("", "--help", "help") do
-    puts opts
+  opts.on("-?", "--help", "help") do
+    $stderr.puts opts
     exit
   end
 end.parse!
@@ -90,7 +90,11 @@ begin
       options[:database],
       auth_data)
 
-  logfile_pusher = LogfilePusher.new(options[:file], options[:regex], uploader)
+  logfile_pusher = LogfilePusher.new(
+      options[:file],
+      options[:regex],
+      uploader,
+      options[:quiet].nil? ? false : true)
   logfile_pusher.run
 
 rescue SystemExit, Interrupt
@@ -98,7 +102,9 @@ rescue SystemExit, Interrupt
     logfile_pusher.stop
   end
   exit(0)
+
 rescue
+
   if logfile_pusher
     logfile_pusher.stop
   end
