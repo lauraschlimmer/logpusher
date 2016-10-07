@@ -1,6 +1,6 @@
 class LogfilePusher
 
-  INSERT_BATCH_SIZE = 48 #FIXME = 1024
+  INSERT_BATCH_SIZE = 1024
 
   def initialize(logfile, regex, uploader, quiet=false)
     @logfile = logfile
