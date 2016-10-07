@@ -2,10 +2,11 @@ class LogfilePusher
 
   INSERT_BATCH_SIZE = 48 #FIXME = 1024
 
-  def initialize(logfile, regex, uploader)
+  def initialize(logfile, regex, uploader, quiet=false)
     @logfile = logfile
     @regex = Regexp.new(regex)
     @uploader = uploader
+    @quiet = quiet
     @stats = UploadStats.new
 
     if !File.file?(@logfile)
@@ -112,6 +113,8 @@ private
   end
 
   def print_stats(state)
+    return if @quiet
+
     $stderr.flush
     case state
     when "upload"
