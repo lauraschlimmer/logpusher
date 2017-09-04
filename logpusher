@@ -1,14 +1,13 @@
 #!/usr/bin/env ruby
 
 require 'optparse'
-require 'uri'
-require 'net/http'
 
 require "./src/util/util.rb"
 require "./src/util/rolling_aggregate.rb"
 require "./src/upload_stats.rb"
 require "./src/logfile_pusher.rb"
 require "./src/eventql_uploader.rb"
+require "./src/sqlite_uploader.rb"
 
 # parse arguments
 options = {}
@@ -21,6 +20,10 @@ OptionParser.new do |opts|
 
   opts.on("-r", "--regex regex", "The Regex of the logline") do |r|
     options[:regex] = r
+  end
+
+  opts.on("-u", "--uploader uploader", "Set the db engine to use") do |u|
+    options[:uploader] = u
   end
 
   opts.on("-t", "--table table", "Set the table name") do |t|
@@ -61,7 +64,9 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-mandatory_args = [:file, :regex, :table, :host, :port, :database]
+puts options
+
+mandatory_args = [:file, :regex, :uploader, :table, :host, :port, :database]
 missing = mandatory_args.select{ |param| options[param].nil? }
 unless missing.empty?
   puts "missing arguments: #{missing.join(', ')}. Run logpusher.rb --help for help"
@@ -83,12 +88,23 @@ end
 
 logfile_pusher = nil
 begin
-  uploader = EventQLUploader.new(
-      options[:table],
-      options[:host],
-      options[:port],
-      options[:database],
-      auth_data)
+  uploader = nil
+  case options[:uploader]
+  when "eventql"
+    uploader = EventQLUploader.new(
+        options[:table],
+        options[:host],
+        options[:port],
+        options[:database],
+        auth_data)
+  when "sqlite"
+    uploader = SQLiteUploader.new(
+        options[:table],
+        options[:database])
+  else
+    puts "unknown uploader #{options[:uploader]}"
+    exit
+  end
 
   logfile_pusher = LogfilePusher.new(
       options[:file],
