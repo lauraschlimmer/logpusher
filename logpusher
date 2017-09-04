@@ -64,8 +64,6 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-puts options
-
 mandatory_args = [:file, :regex, :uploader, :table, :host, :port, :database]
 missing = mandatory_args.select{ |param| options[param].nil? }
 unless missing.empty?
