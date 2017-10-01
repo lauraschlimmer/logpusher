@@ -98,13 +98,13 @@ private
       if !m = line.match(@regex)
         $stderr.puts  "Dropping logline '#{line}' because it does not match the parsing regex: #{@regex}"
       else
-        lines.push(@uploader.buildJSONForLogline(m))
+        lines.push(m)
       end
 
       line.clear()
     end
 
-    @uploader.send(lines)
+    @uploader.insert(lines)
 
     @stats.add_upload(lines.size)
     print_stats("upload")

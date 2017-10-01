@@ -1,71 +1,39 @@
+require "eventql"
+
 class EventQLUploader
 
-  API_URL = "/api/v1/tables/insert"
-
-  def initialize(table_name, host, port, database, auth_data)
-    @url = URI("#{host}:#{port}#{API_URL}")
-    @host = host
-    @port = port
-    @auth_data = auth_data
-    @json_begin =
-        "{\"database\": \"#{database}\", \"table\": \"#{table_name}\", \"data\": "
+  def self.mandatory_args()
+    return [:db, :table, :host, :port]
   end
 
-  def buildJSONForLogline(logline)
-    idx = 0
-    json = "{"
+  def initialize(options)
+    #@auth_data = auth_data
 
-    logline.names.each do |key|
-      value = logline[key]
+    @row = {:database => options[:db], :table => options[:table]}
 
-      json += "," unless idx == 0
-      json += "\"#{key}\": "
-      json += value.numeric? ? value : "\"#{value}\""
-
-      idx += 1
-    end
-
-    json += "}"
-    json
+    @db = EventQL.connect({
+      :host => options[:host],
+      :port => options[:port],
+      :database => options[:db]
+    })
   end
 
-  def send(records)
-    # build json
-    idx = 0
-    json = "["
-    records.each do |r|
-      if idx > 0
-        json += ","
+  def insert(lines)
+    data = []
+    lines.each do |line|
+      row = @row.clone
+
+      d = {}
+      line.names.each do |key|
+        value = line[key]
+        d[key] = value.numeric? ? line[key].to_i : line[key]
       end
 
-      json += @json_begin + r + "}"
-      idx += 1
+      row[:data] = d
+      data.push(row)
     end
-    json += "]"
 
-    begin
-      res = nil
-      Net::HTTP.start(@host, @port) do |http|
-        req = Net::HTTP::Post.new(API_URL)
-
-        # set auth headers
-        @auth_data.each do |key, value|
-          req[key] = value
-        end
-
-        req.body = json
-
-        res = http.request(req)
-      end
-
-      if res.code.to_i != 201
-        raise "http error: #{res.code} - #{res.body}"
-      end
-
-    rescue TimeoutError => e
-      $stderr.puts("Timeout error...", e.inspect)
-    end
+    @db.insert!(data)
   end
-
 end
 
