@@ -2,9 +2,15 @@ require "sqlite3"
 
 class SQLiteUploader
 
-  def initialize(table, database)
-    @table = table
-    @db = SQLite3::Database.new(database)
+  def self.mandatory_args()
+    return [:table, :db]
+
+  end
+
+  def initialize(options)
+
+    @table = options[:table]
+    @db = SQLite3::Database.new(options[:db])
   end
 
   def insert(lines)
@@ -24,7 +30,5 @@ class SQLiteUploader
       @db.execute(query, values)
     end
   end
-
 end
-
 

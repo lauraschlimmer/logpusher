@@ -22,8 +22,12 @@ OptionParser.new do |opts|
     options[:regex] = r
   end
 
-  opts.on("-u", "--uploader uploader", "Set the db engine to use") do |u|
-    options[:uploader] = u
+  opts.on("-s", "--storage engine", "The storage engine to be used") do |s|
+    options[:storage] = s
+  end
+
+  opts.on("-d", "--database db", "The database engine to be used") do |d|
+    options[:db] = d
   end
 
   opts.on("-t", "--table table", "Set the table name") do |t|
@@ -38,22 +42,6 @@ OptionParser.new do |opts|
     options[:port] = p
   end
 
-  opts.on("-u", "--user username", "Set the username") do |u|
-    options[:user] = u
-  end
-
-  opts.on(nil, "--password password", "Set the password") do |u|
-    options[:user] = u
-  end
-
-  opts.on("-d", "--database db", "Set the database") do |d|
-    options[:database] = d
-  end
-
-  opts.on(nil, "--auth_token token", "Set the auth token") do |a|
-    options[:auth_token] = a
-  end
-
   opts.on("-q", "--quiet", "Run quietly") do |q|
     options[:quiet] = q
   end
@@ -64,65 +52,49 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-mandatory_args = [:file, :regex, :uploader, :table, :host, :port, :database]
+mandatory_args = [:file, :regex, :storage]
 missing = mandatory_args.select{ |param| options[param].nil? }
 unless missing.empty?
-  puts "missing arguments: #{missing.join(', ')}. Run logpusher.rb --help for help"
+  puts "ERROR: missing arguments: #{missing.join(', ')}. Run logpusher.rb --help for help"
   exit
 end
 
-auth_data = {};
-if options[:user]
-  auth_data[:user] = options[:user]
-end
-
-if options[:password]
-  auth_data[:password] = options[:password]
-end
-
-if options[:auth_token]
-  auth_data[:auth_token] = options[:auth_token]
-end
-
 logfile_pusher = nil
+
+storage_engines = {
+  "eventql" => EventQLUploader,
+  "sqlite" => SQLiteUploader
+}
+
 begin
-  uploader = nil
-  case options[:uploader]
-  when "eventql"
-    uploader = EventQLUploader.new(
-        options[:table],
-        options[:host],
-        options[:port],
-        options[:database],
-        auth_data)
-  when "sqlite"
-    uploader = SQLiteUploader.new(
-        options[:table],
-        options[:database])
-  else
-    puts "unknown uploader #{options[:uploader]}"
-    exit
+  unless storage_engines.has_key?(options[:storage])
+    puts "ERROR: unknown uploader #{options[:uploader]}"
+    exit 1
   end
+
+  mandatory_args = storage_engines[options[:storage]].mandatory_args()
+  missing = mandatory_args.select{ |param| options[param].nil? }
+  unless missing.empty?
+    raise "missing arguments: #{missing.join(', ')}. Run logpusher.rb --help for help"
+  end
+
+  storage_engine = storage_engines[options[:storage]].new(options)
 
   logfile_pusher = LogfilePusher.new(
       options[:file],
       options[:regex],
-      uploader,
+      storage_engine,
       options[:quiet].nil? ? false : true)
   logfile_pusher.run
 
 rescue SystemExit, Interrupt
-  if logfile_pusher
-    logfile_pusher.stop
-  end
   exit(0)
 
 rescue
-
-  if logfile_pusher
-    logfile_pusher.stop
-  end
   $stderr.puts "ERROR: #{$!} \n"
   exit(1)
+
+ensure
+  logfile_pusher.stop unless logfile_pusher.nil?
 end
 

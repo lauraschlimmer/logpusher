@@ -2,11 +2,20 @@ require "eventql"
 
 class EventQLUploader
 
-  def initialize(table_name, host, port, database, auth_data)
-    @auth_data = auth_data
-    @row = {:database => database, :table => table_name}
+  def self.mandatory_args()
+    return [:db, :table, :host, :port]
+  end
 
-    @db = EventQL.connect({:host => host, :port => port, :database => database})
+  def initialize(options)
+    #@auth_data = auth_data
+
+    @row = {:database => options[:db], :table => options[:table]}
+
+    @db = EventQL.connect({
+      :host => options[:host],
+      :port => options[:port],
+      :database => options[:db]
+    })
   end
 
   def insert(lines)
