@@ -72,7 +72,7 @@ private
     batch = Array.new
     idx = 0
     IO.readlines(@logfile).each do |line|
-      if (idx += 1) < offset
+      if (idx += 1) <= offset
         next
       end
 
