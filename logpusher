@@ -9,38 +9,54 @@ require "./src/logfile_pusher.rb"
 require "./src/eventql_uploader.rb"
 require "./src/sqlite_uploader.rb"
 
+logfile_pusher = nil
+
+storage_engines = {
+  "eventql" => EventQLUploader,
+  "sqlite" => SQLiteUploader
+}
+
 # parse arguments
 options = {}
 OptionParser.new do |opts|
-  opts.banner = "Usage: logpusher.rb [options]"
+  opts.banner = "Usage: $ logpusher [OPTIONS]"
 
-  opts.on("-f", "--file filename", "Set the logfile to import") do |f|
+  opts.on("-f", "--file <file>", "Set the path of the logfile to import") do |f|
     options[:file] = f
   end
 
-  opts.on("-r", "--regex regex", "The Regex of the logline") do |r|
+  opts.on("-r", "--regex <REGEX>", "Set the regex") do |r|
     options[:regex] = r
   end
 
-  opts.on("-s", "--storage engine", "The storage engine to be used") do |s|
+  opts.on("-s", "--storage <engine>", "Set the storage engine") do |s|
     options[:storage] = s
   end
 
-  opts.on("-d", "--database db", "The database engine to be used") do |d|
+  opts.on("-c", "--connections <num>", "Set the number of concurrent connections") do |c|
+    options[:connections] = c
+  end
+
+  opts.on(NIL, "--batch_size <num>", "Set the batch size") do |batch_size|
+    options[:batch_size] = batch_size
+  end
+
+  opts.on("-d", "--database <db>", "Select a database") do |d|
     options[:db] = d
   end
 
-  opts.on("-t", "--table table", "Set the table name") do |t|
+  opts.on("-t", "--table <tbl>", "Select a destination table") do |t|
     options[:table] = t
   end
 
-  opts.on("-h", "--host hostname", "Set the hostname") do |h|
+  opts.on("-h", "--host <hostname>", "Set the hostname of the storage engine") do |h|
     options[:host] = h
   end
 
-  opts.on("-p", "--port port", "Set the port") do |p|
+  opts.on("-p", "--port <port>", "Set the port of the storage engine") do |p|
     options[:port] = p
   end
+
 
   opts.on("-q", "--quiet", "Run quietly") do |q|
     options[:quiet] = q
@@ -55,20 +71,13 @@ end.parse!
 mandatory_args = [:file, :regex, :storage]
 missing = mandatory_args.select{ |param| options[param].nil? }
 unless missing.empty?
-  puts "ERROR: missing arguments: #{missing.join(', ')}. Run logpusher.rb --help for help"
+  $stderr.puts "ERROR: missing arguments: #{missing.join(', ')}. Run logpusher.rb --help for help"
   exit
 end
 
-logfile_pusher = nil
-
-storage_engines = {
-  "eventql" => EventQLUploader,
-  "sqlite" => SQLiteUploader
-}
-
 begin
   unless storage_engines.has_key?(options[:storage])
-    puts "ERROR: unknown uploader #{options[:uploader]}"
+    $stderr.puts "ERROR: unknown storage engine #{options[:storage]}"
     exit 1
   end
 
@@ -80,11 +89,7 @@ begin
 
   storage_engine = storage_engines[options[:storage]].new(options)
 
-  logfile_pusher = LogfilePusher.new(
-      options[:file],
-      options[:regex],
-      storage_engine,
-      options[:quiet].nil? ? false : true)
+  logfile_pusher = LogfilePusher.new(storage_engine, options)
   logfile_pusher.run
 
 rescue SystemExit, Interrupt

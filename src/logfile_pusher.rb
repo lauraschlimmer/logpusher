@@ -1,22 +1,32 @@
 class LogfilePusher
 
-  INSERT_BATCH_SIZE = 2 #FIXME
-  NUM_THREADS = 3
+  DEFAULT_BATCH_SIZE = 2 #FIXME
+  DEFAULT_NUM_THREADS = 3
 
-  def initialize(logfile, regex, uploader, quiet=false)
-    @logfile = logfile
-    @regex = Regexp.new(regex)
-    @uploader = uploader
-    @quiet = quiet
-    @stats = UploadStats.new
-    @queue = Array.new
-    @complete = false
-    @mutex = Mutex.new
-    @cv = ConditionVariable.new
-
+  def initialize(uploader, opts)
+    # mandatory
+    @logfile = opts[:file]
     if !File.file?(@logfile)
       raise "the file doesn't exist: #{@logfile}"
     end
+
+    @regex = Regexp.new(opts[:regex])
+
+    # optional
+    @quiet = opts.has_key?(:quiet) ? opts[:quiet] : false
+    @num_threads = opts.has_key?(:connections) ?
+        opts[:connections] :
+        DEFAULT_NUM_THREADS
+    @batch_size = opts.has_key?(:batch_size) ?
+        opts[:batch_size] :
+        DEFAULT_BATCH_SIZE
+
+    @uploader = uploader
+    @stats = UploadStats.new
+    @queue = Array.new
+    @mutex = Mutex.new
+    @cv = ConditionVariable.new
+    @threads = Array.new
   end
 
 public
@@ -26,49 +36,56 @@ public
     cur_inode = nil
     cur_size = nil
 
-    #while true FIXME
-      # if the inode number of the file changes (e.g. the file has been
-      # logrotated), start reading the file at the beginning
-      if (inode = File.stat(@logfile).ino) != cur_inode
-        cur_size = File.size(@logfile)
-        cur_inode = inode
-        offset = run_(0)
-
-      # if the file size is smaller, start reading at the beginning
-      elsif (size = File.size(@logfile)) < cur_size
-        cur_size = size
-        offset = run_(0)
-
-      # if the file is bigger, start reading at the offset
-      elsif size > cur_size
-        cur_size = size
-        offset = run_(offset)
-
-      else
-        print_stats("wait")
-      end
-
-      sleep(5)
-    #end
-
-  end
-
-  def stop
-    #FIXME close file?
-    print_stats("stop")
-  end
-
-private
-
-  def run_(offset = 0)
     # start threads
-    threads = Array.new(NUM_THREADS) do
+    @threads = Array.new(@num_threads) do
       Thread.new do
         run_thread()
       end
     end
 
-    # read and enqueue lines in batches
+    while true
+      # if the inode number of the file changes (e.g. the file has been
+      # logrotated), start reading the file at the beginning
+      if (inode = File.stat(@logfile).ino) != cur_inode
+        cur_size = File.size(@logfile)
+        cur_inode = inode
+        offset = process_file(0)
+
+      # if the file size is smaller, start reading at the beginning
+      elsif (size = File.size(@logfile)) < cur_size
+        cur_size = size
+        offset = process_file(0)
+
+      # if the file is bigger, start reading at the offset
+      elsif size > cur_size
+        cur_size = size
+        offset = process_file(offset)
+
+      else
+        print_stats(:Wait)
+      end
+
+      sleep(2)
+    end
+
+    @threads.each do |th|
+      if th
+        th.join()
+      end
+    end
+  end
+
+  def stop
+    #FIXME close file?
+    # join threads
+    puts @threads.inspect
+    print_stats(:Stop)
+  end
+
+private
+
+  # read and enqueue lines in batches
+  def process_file(offset = 0)
     batch = Array.new
     idx = 0
     IO.readlines(@logfile).each do |line|
@@ -82,28 +99,17 @@ private
         next
       end
 
-      if batch.size >= INSERT_BATCH_SIZE
+      if batch.size >= @batch_size
         enqueue_batch(batch)
         batch.clear()
       end
 
       batch.push(m)
-
-      print_stats("upload")
     end
 
     if batch.size > 0
       enqueue_batch(batch)
     end
-
-    # send upload complete signal
-    @mutex.synchronize {
-      @complete = true
-      @cv.signal
-    }
-
-    # join threads
-    threads.each { |th| th.join }
 
     return idx
   end
@@ -122,11 +128,7 @@ private
           break;
         end
 
-        if @complete
-          return nil
-        else
-          @cv.wait(@mutex)
-        end
+        @cv.wait(@mutex)
       end
 
       batch = @queue.shift
@@ -139,7 +141,7 @@ private
     while (batch = pop_batch)
       @uploader.insert(batch)
       @stats.add_upload(batch.size)
-      print_stats("upload")
+      print_stats(:Upload)
     end
   end
 
@@ -147,15 +149,15 @@ private
     return if @quiet
 
       case state
-      when "upload"
+      when :Upload
         @mutex.synchronize {
           $stderr.print "Uploading... rate=#{@stats.get_rolling_rows_per_second}lines/s\r"
         }
 
-      when "wait"
+      when :Wait
         $stderr.print "Waiting... the file hasn't changed since the last upload\r"
 
-      when "stop"
+      when :Stop
         $stderr.print "Uploaded #{@logfile}... " +
             "total=#{@stats.get_total_row_count}lines, " +
             "runtime=#{@stats.get_total_runtime.round(2)}s\n"
