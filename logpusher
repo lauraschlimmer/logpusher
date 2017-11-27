@@ -8,12 +8,14 @@ require "./src/upload_stats.rb"
 require "./src/logfile_pusher.rb"
 require "./src/eventql_uploader.rb"
 require "./src/sqlite_uploader.rb"
+require "./src/mongo_uploader.rb"
 
 logfile_pusher = nil
 
 storage_engines = {
   "eventql" => EventQLUploader,
-  "sqlite" => SQLiteUploader
+  "sqlite" => SQLiteUploader,
+  "mongo" => MongoUploader
 }
 
 # parse arguments
