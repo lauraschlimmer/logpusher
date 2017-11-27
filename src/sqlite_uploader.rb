@@ -4,7 +4,6 @@ class SQLiteUploader
 
   def self.mandatory_args()
     return [:table, :db]
-
   end
 
   def initialize(options)

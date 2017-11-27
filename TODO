@@ -2,6 +2,7 @@
 [ ] better stats
     - add bandwidth
     - add active runtime
-
 [ ] MongoDB support
 [ ] PostgreSQL support
+[ ] tests
+[ ] don't insert lines multiple times on restart
