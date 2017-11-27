@@ -1,5 +1,7 @@
+[ ] README: add exmaple logfile
 [ ] better stats
     - add bandwidth
     - add active runtime
 
-[ ] REDIS support
+[ ] MongoDB support
+[ ] PostgreSQL support
