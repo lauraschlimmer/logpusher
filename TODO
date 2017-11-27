@@ -1,6 +1,5 @@
-[ ] README
 [ ] better stats
     - add bandwidth
     - add active runtime
 
-[ ] support other databases
+[ ] REDIS support
