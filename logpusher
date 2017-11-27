@@ -62,7 +62,7 @@ OptionParser.new do |opts|
     options[:quiet] = q
   end
 
-  opts.on("-?", "--help", "help") do
+  opts.on("-?", "--help", "Display this help text and exit") do
     $stderr.puts opts
     exit
   end
