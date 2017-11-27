@@ -100,7 +100,7 @@ private
       end
 
       if batch.size >= @batch_size
-        enqueue_batch(batch)
+        enqueue_batch(batch.dup)
         batch.clear()
       end
 
