@@ -21,7 +21,7 @@ Each group in the REGEX represents a column in the target table.
         -q, --quiet                      Run quietly
         -?, --help                       Display this help text and exit
 
-Import `time` and `server_name` from the logfile into the table access_logs:
+Example: Import `time` and `server_name` from the logfile into the table access_logs
 
     $ logpusher -s sqlite -f /logs/access.logs -r "(?<time>\d{10}) (?<server_name>\w+)" -d "test.db" -t access_logs
 
@@ -40,7 +40,7 @@ Import `time` and `server_name` from the logfile into the table access_logs:
         -q, --quiet                      Run quietly
         -?, --help                       Display this help text and exit
 
-Connect to the EventQL client on localhost:10001 and import the logfile into the table access_logs:
+Example: Connect to the EventQL client on localhost:10001 and import the logfile into the table access_logs
 
     $ regex="(?<time>\d+) (?<server_name>\w+) (?<http_method>\w+) (?<path>.+)"
     $ logpusher -f logs.access_logs -r $regex -t access_logs -h localhost -p 10001 -d dev
