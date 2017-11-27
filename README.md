@@ -24,6 +24,7 @@ Each group represents a column in the target table.
         -q, --quiet                      Run quietly
         -?, --help                       Display this help text and exit
 
+
     $ logpusher -s sqlite -f /logs/access.logs -r "(?<time>\d{10}) (?<server_name>\w+)" -d "test.db" -t access_logs
 
 Imports the `time` and `server_name` from the logfile into the table access_logs
@@ -41,6 +42,7 @@ Imports the `time` and `server_name` from the logfile into the table access_logs
         -p, --port <port>                Set the port of the storage engine
         -q, --quiet                      Run quietly
         -?, --help                       Display this help text and exit
+
 
     $ regex="(?<time>\d+) (?<server_name>\w+) (?<http_method>\w+) (?<path>.+)"
     $ logpusher -f logs.access_logs -r $regex -t access_logs -h localhost -p 10001 -d dev
