@@ -67,18 +67,15 @@ public
 
       sleep(2)
     end
-
-    @threads.each do |th|
-      if th
-        th.join()
-      end
-    end
   end
 
   def stop
-    #FIXME close file?
-    # join threads
-    puts @threads.inspect
+    @threads.each do |th|
+      if th
+        th.kill()
+      end
+    end
+
     print_stats(:Stop)
   end
 

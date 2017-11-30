@@ -9,13 +9,15 @@ require "./src/logfile_pusher.rb"
 require "./src/eventql_uploader.rb"
 require "./src/sqlite_uploader.rb"
 require "./src/mongo_uploader.rb"
+require "./src/postgresql_uploader.rb"
 
 logfile_pusher = nil
 
 storage_engines = {
   "eventql" => EventQLUploader,
   "sqlite" => SQLiteUploader,
-  "mongo" => MongoUploader
+  "mongo" => MongoUploader,
+  "postgresql" => PostgreSQLUploader
 }
 
 # parse arguments
@@ -59,6 +61,9 @@ OptionParser.new do |opts|
     options[:port] = p
   end
 
+  opts.on("-u", "--user <username>", "Set the username of the storage engine") do |u|
+    options[:user] = u
+  end
 
   opts.on("-q", "--quiet", "Run quietly") do |q|
     options[:quiet] = q
@@ -95,13 +100,12 @@ begin
   logfile_pusher.run
 
 rescue SystemExit, Interrupt
-  exit(0)
 
 rescue
   $stderr.puts "ERROR: #{$!} \n"
-  exit(1)
 
 ensure
   logfile_pusher.stop unless logfile_pusher.nil?
+  Kernel::exit
 end
 
