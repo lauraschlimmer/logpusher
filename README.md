@@ -6,6 +6,8 @@ are constantly added.
 To specify which parts of the logline should be extracted and imported into the target table, simply define a REGEX with named capturing groups.
 Each group in the REGEX represents a column in the target table.
 
+### Logfile and REGEX
+
     1475597897 lnd09 /GET / 80
     1475597905 lnd09 /GET /img/home.png 80
     1475597936 lnd07 /POST /account/new 80
