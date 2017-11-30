@@ -42,26 +42,26 @@ Note that some options may vary depending on the storage engine/database system 
 
 Example: Import `time` and `server_name` from the logfile into the table access_logs
 
-    $ logpusher -s sqlite -f /logs/access.logs -r $regex -d "test.db" -t access_logs
+    $ logpusher -s sqlite -f logs.access_logs -r $regex -d "dev.db" -t access_logs
 
 
 #### MongoDB
 
 Example: Connect to MongoDB on 127.0.0.1:27017 and import the logfile into the collection access_logs
 
-    $ logpusher -s mongo -f /tmp/logs -r $regex -t access_logs -d "test" -h "127.0.0.1" -p "27017"
+    $ logpusher -s mongo -f logs.access_logs -r $regex -d dev -t access_logs -h localhost -p 27017
 
 
 #### EventQL
 
 Example: Connect to the EventQL server on localhost:10001 and import the logfile into the table access_logs
 
-    $ logpusher -f logs.access_logs -r $regex -t access_logs -h localhost -p 10001 -d dev
+    $ logpusher -s eventql -f logs.access_logs -r $regex -d dev -t access_logs -h localhost -p 10001
 
 
 #### PostgreSQL
 
 Example: Connect to PostgreSQL server on localhost:5432 as user dev and import the logfile into the table access_logs
 
-    $ logpusher -s postgresql -f logs.access_logs -r $regex -t access_logs -d dev -u dev -h localhost -p 5432
+    $ logpusher -s postgresql -f logs.access_logs -r $regex -d dev -t access_logs-h localhost -p 5432 -u dev
 
